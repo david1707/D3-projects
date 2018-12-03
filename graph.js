@@ -8,7 +8,7 @@ const svg = d3.select('.canvas')
   .attr('height', dims.height + 150);
 
 const graph = svg.append('g')
-    .attr('transform', `translate(${cent.x}, ${cent.y})`)
+    .attr('transform', `translate(${cent.x +40}, ${cent.y})`)
 
 const pie = d3.pie()
     .sort(null)
@@ -20,11 +20,25 @@ const arcPath = d3.arc()
 
 const colour = d3.scaleOrdinal(d3['schemeSet3']);
 
+// Legend setup
+const legendGroup = svg.append('g')
+    .attr('transform', `translate(${dims.width + 80}, 10)`)
+
+const legend = d3.legendColor()
+    .shape('circle')
+    .shapePadding(10)
+    .scale(colour)
+
 // Update function
 const update = data => {
 
     // Update colour scale domain
     colour.domain(data.map(d => d.name));
+
+    // Update and call legend
+    legendGroup.call(legend);
+    legendGroup.selectAll('text')
+        .attr('fill', 'white')
 
     // Join enhaced (pie) data to path elements
     const paths = graph.selectAll('path')
