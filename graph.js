@@ -29,6 +29,17 @@ const legend = d3.legendColor()
     .shapePadding(10)
     .scale(colour)
 
+const tip = d3.tip()
+    .attr('class', 'tip card')
+    .html(d => {
+        let content = `<div class="name">${d.data.name}</div>`;
+        content += `<div class="cost">${d.data.cost}</div>`;
+        content += `<div class="delete">Click slice to delete</div>`;
+        return content;
+    });
+
+graph.call(tip);
+
 // Update function
 const update = data => {
 
@@ -68,8 +79,15 @@ const update = data => {
 
     // Add events
     graph.selectAll('path')
-        .on('mouseover', handleMouseOver)
-        .on('mouseout', handleMouseOut)
+        .on('mouseover', (d, i, n) => {
+            tip.show(d, n[i])
+            handleMouseOver(d, i, n)
+        })
+        .on('mouseout', (d, i, n) => {
+            tip.hide()
+            handleMouseOut(d, i, n)
+        })
+        .on('click', handleClick)
 };
 
 // Data array and firestore
@@ -138,4 +156,9 @@ const handleMouseOut = (d, i, n) => {
     d3.select(n[i])
         .transition('changeSliceFill').duration(300)
             .attr('fill', colour(d.data.name));
+}
+
+const handleClick = (d) => {
+    const { id } = d.data
+    const a = db.collection('expenses').doc(id).delete();
 }
