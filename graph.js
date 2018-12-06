@@ -26,18 +26,35 @@ const yAxisGroup = graph.append('g')
 
 // D3 line path generator
 const line = d3.line()
-    .x(function(d) { return x(new Date(d.date))})
-    .y(function(d) { return y(d.distance)});
+    .x(function (d) { return x(new Date(d.date)) })
+    .y(function (d) { return y(d.distance) });
 
 // Line path element
-const path = graph.append('path');
+const path = graph.append('path')
+
+// Create dotted line group and append to graph
+const dottedLines = graph.append('g')
+    .attr('class', 'lines')
+    .attr('opacity', 0)
+
+// Create x dotted line and append to dotted line group
+const xDottedLine = dottedLines.append('line')
+    .attr('stroke', '#aaa')
+    .attr('stroke-width', 1)
+    .attr('stroke-dasharray', 4)
+
+// Create y dotted line and append to dotted line group
+const yDottedLine = dottedLines.append('line')
+    .attr('stroke', '#aaa')
+    .attr('stroke-width', 1)
+    .attr('stroke-dasharray', 4)
 
 const update = data => {
 
     data = data.filter(item => item.activity == activity);
 
     // Sort data based on date objects
-    data.sort( (a, b) => new Date(a.date) - new Date(b.date));    
+    data.sort((a, b) => new Date(a.date) - new Date(b.date));
 
     // Set scale domains
     x.domain(d3.extent(data, d => new Date(d.date)))
@@ -65,10 +82,43 @@ const update = data => {
     // Add new points
     circles.enter()
         .append('circle')
-            .attr('r', 4)
-            .attr('cx', d => x(new Date(d.date)))
-            .attr('cy', d => y(d.distance))
-            .attr('fill', '#ccc')
+        .attr('r', 4)
+        .attr('cx', d => x(new Date(d.date)))
+        .attr('cy', d => y(d.distance))
+        .attr('fill', '#ccc');
+
+    graph.selectAll('circle')
+        .on('mouseover', (d, i, n) => {
+            d3.select(n[i])
+                .transition().duration(100)
+                .attr('r', 8)
+                .attr('fill', 'white');
+
+            // Set X dotted line coords
+            xDottedLine
+                .attr('x1', x(new Date(d.date)))
+                .attr('x2', x(new Date(d.date)))
+                .attr('y1', graphHeight)
+                .attr('y2', y(d.distance))
+
+            // Set y dotted line coords
+            yDottedLine
+                .attr('x1', 0)
+                .attr('x2', x(new Date(d.date)))
+                .attr('y1', y(d.distance))
+                .attr('y2', y(d.distance));
+
+            // Show the dotted line group (.style. opacity)
+            dottedLines.attr('opacity', 1)
+        })
+        .on('mouseleave', (d, i, n) => {
+            d3.select(n[i])
+                .transition().duration(300)
+                .attr('r', 4)
+                .attr('fill', '#ccc');
+
+            dottedLines.attr('opacity', 0)
+        });
 
     // Create axes
     const xAxis = d3.axisBottom(x)
@@ -113,5 +163,5 @@ db.collection('activities').onSnapshot(res => {
         }
     });
 
-update(data)
+    update(data)
 })
